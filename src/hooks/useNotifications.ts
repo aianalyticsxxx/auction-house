@@ -100,8 +100,8 @@ export function useNotifications(): UseNotificationsReturn {
         setUnreadCount((prev) =>
           ids ? Math.max(0, prev - ids.length) : 0
         );
-      } catch (err) {
-        console.error("Failed to mark as read:", err);
+      } catch {
+        // Silently fail - UI state is optimistically updated
       }
     },
     [publicKey]
@@ -124,8 +124,8 @@ export function useNotifications(): UseNotificationsReturn {
         prev.map((n) => ({ ...n, is_read: true }))
       );
       setUnreadCount(0);
-    } catch (err) {
-      console.error("Failed to mark all as read:", err);
+    } catch {
+      // Silently fail - UI state is optimistically updated
     }
   }, [publicKey]);
 

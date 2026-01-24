@@ -124,7 +124,7 @@ Run the comprehensive test suite:
 PORT=3100 npm run dev
 
 # In another terminal
-node test-security-no-db.js
+node tests/manual/test-security-no-db.js
 ```
 
 Expected result: **20/20 tests pass**

@@ -1,4 +1,7 @@
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("solana");
 
 const RPC_URL =
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com";
@@ -103,7 +106,7 @@ export async function verifyPaymentTransaction(
       error: "No matching transfer found in transaction",
     };
   } catch (error) {
-    console.error("Transaction verification error:", error);
+    logger.error({ err: error, txSignature }, "Transaction verification error");
     return {
       isValid: false,
       error: error instanceof Error ? error.message : "Verification failed",
@@ -134,7 +137,7 @@ export async function waitForTransactionConfirmation(
       // Wait before checking again
       await new Promise((resolve) => setTimeout(resolve, 2000));
     } catch (error) {
-      console.error("Error checking transaction status:", error);
+      logger.error({ err: error, txSignature }, "Error checking transaction status");
     }
   }
 

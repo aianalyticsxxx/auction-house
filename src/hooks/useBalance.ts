@@ -28,8 +28,7 @@ export function useBalance(): UseBalanceReturn {
     try {
       const bal = await connection.getBalance(publicKey);
       setBalance(bal);
-    } catch (error) {
-      console.error("Failed to fetch balance:", error);
+    } catch {
       setBalance(null);
     } finally {
       setIsLoading(false);

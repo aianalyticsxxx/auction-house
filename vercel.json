@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/settlements/cascade",
-      "schedule": "0 * * * *"
+      "schedule": "*/5 * * * *"
     }
   ]
 }

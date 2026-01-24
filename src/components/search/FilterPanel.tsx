@@ -29,7 +29,7 @@ export function FilterPanel({ className = "" }: FilterPanelProps) {
     fetch("/api/tags?limit=10")
       .then((res) => res.json())
       .then((data) => setPopularTags(data.tags || []))
-      .catch(console.error);
+      .catch(() => {});
   }, []);
 
   // Sync state with URL params

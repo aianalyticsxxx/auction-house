@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { ApiError, RateLimitError } from "./classes";
 import { ZodError } from "zod";
+import { apiLogger } from "@/lib/logger";
 
 export function handleApiError(error: unknown): NextResponse {
-  console.error("API Error:", error);
+  apiLogger.error({ err: error }, "API Error");
 
   // Known API errors
   if (error instanceof ApiError) {

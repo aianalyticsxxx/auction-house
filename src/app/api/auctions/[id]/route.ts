@@ -10,6 +10,7 @@ import {
 } from "@/lib/errors/classes";
 import { validateBody } from "@/lib/validation/middleware";
 import { deleteAuctionSchema } from "@/lib/validation/schemas";
+import { auctionLogger } from "@/lib/logger";
 
 // GET /api/auctions/[id] - Get single auction with bids
 export async function GET(
@@ -56,7 +57,7 @@ export async function GET(
       .order("amount", { ascending: false });
 
     if (bidsError) {
-      console.error("Error fetching bids:", bidsError);
+      auctionLogger.error({ err: bidsError, auctionId: params.id }, "Error fetching bids");
     }
 
     return NextResponse.json({

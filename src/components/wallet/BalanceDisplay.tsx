@@ -26,10 +26,9 @@ export function BalanceDisplay() {
         if (isMounted) {
           setBalance(bal / LAMPORTS_PER_SOL);
         }
-      } catch (error) {
-        console.error("Failed to fetch balance:", error);
+      } catch {
         if (isMounted) {
-          setBalance(0); // Show 0 on error rather than hiding
+          setBalance(0);
         }
       } finally {
         if (isMounted) {
@@ -40,17 +39,15 @@ export function BalanceDisplay() {
 
     fetchBalance();
 
-    // Subscribe to balance changes
     try {
       subscriptionId = connection.onAccountChange(publicKey, (account) => {
         if (isMounted) {
           const newBalance = account.lamports / LAMPORTS_PER_SOL;
-          // Only update if balance actually changed to prevent re-render loops
           setBalance((prev) => (prev === newBalance ? prev : newBalance));
         }
       });
-    } catch (error) {
-      console.error("Failed to subscribe to balance changes:", error);
+    } catch {
+      // Subscription failed, rely on manual refresh
     }
 
     return () => {

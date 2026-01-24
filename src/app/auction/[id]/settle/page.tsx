@@ -190,7 +190,6 @@ export default function SettlePage({ params }: PageProps) {
       setPaymentSuccess(true);
       fetchSettlement();
     } catch (err) {
-      console.error("Payment error:", err);
       setPaymentError(
         err instanceof Error ? err.message : "Payment failed"
       );

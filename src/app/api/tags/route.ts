@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { rateLimit, getRateLimitIdentifier } from "@/lib/rate-limit/limiter";
 import { handleApiError } from "@/lib/errors/handler";
+import { apiLogger } from "@/lib/logger";
 
 // GET /api/tags - Get popular tags for filtering
 export async function GET(request: NextRequest) {
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Error fetching tags:", error);
+      apiLogger.error({ err: error }, "Error fetching tags");
       return NextResponse.json(
         { error: "Failed to fetch tags" },
         { status: 500 }

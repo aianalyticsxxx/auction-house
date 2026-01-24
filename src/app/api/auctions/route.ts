@@ -9,6 +9,7 @@ import {
 } from "@/lib/errors/classes";
 import { validateBody } from "@/lib/validation/middleware";
 import { createAuctionSchema } from "@/lib/validation/schemas";
+import { auctionLogger } from "@/lib/logger";
 
 // GET /api/auctions - List auctions with search and filtering
 export async function GET(request: NextRequest) {
@@ -117,31 +118,43 @@ export async function GET(request: NextRequest) {
     const { data: auctions, error } = await dbQuery;
 
     if (error) {
-      console.error("Database error:", error);
+      auctionLogger.error({ err: error }, "Failed to fetch auctions");
       return NextResponse.json(
         { error: "Failed to fetch auctions" },
         { status: 500 }
       );
     }
 
-    // Get highest bid for each auction
-    const auctionsWithBids = await Promise.all(
-      (auctions || []).map(async (auction) => {
-        const { data: highestBid } = await supabase
-          .from("bids")
-          .select("amount")
-          .eq("auction_id", auction.id)
-          .order("amount", { ascending: false })
-          .limit(1)
-          .single();
+    // Get highest bids for all auctions in a single query
+    const auctionIds = (auctions || []).map((a) => a.id);
 
-        return {
-          ...auction,
-          highest_bid: highestBid?.amount || null,
-          bids_count: auction.bids?.[0]?.count || 0,
-        };
-      })
-    );
+    let highestBidsMap: Record<string, number> = {};
+
+    if (auctionIds.length > 0) {
+      // Use a single query with distinct on to get max bid per auction
+      const { data: highestBids } = await supabase
+        .from("bids")
+        .select("auction_id, amount")
+        .in("auction_id", auctionIds)
+        .order("auction_id")
+        .order("amount", { ascending: false });
+
+      // Build a map of auction_id -> highest amount
+      // Since results are ordered by amount desc, first occurrence per auction is highest
+      if (highestBids) {
+        for (const bid of highestBids) {
+          if (!(bid.auction_id in highestBidsMap)) {
+            highestBidsMap[bid.auction_id] = bid.amount;
+          }
+        }
+      }
+    }
+
+    const auctionsWithBids = (auctions || []).map((auction) => ({
+      ...auction,
+      highest_bid: highestBidsMap[auction.id] || null,
+      bids_count: auction.bids?.[0]?.count || 0,
+    }));
 
     // Sort by most_bids after fetching if needed
     if (sort === "most_bids") {
@@ -211,7 +224,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (auctionError) {
-      console.error("Failed to create auction:", auctionError);
+      auctionLogger.error({ err: auctionError, userId: user.id }, "Failed to create auction");
       return NextResponse.json(
         { error: "Failed to create auction" },
         { status: 500 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { cronLogger } from "@/lib/logger";
 
 // Vercel Cron job to update auction statuses
 // Runs every minute to transition auctions between upcoming -> current -> settling
@@ -17,13 +18,13 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.rpc("update_auction_statuses");
 
     if (error) {
-      console.error("Failed to update auction statuses:", error);
+      cronLogger.error({ err: error }, "Failed to update auction statuses");
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, timestamp: new Date().toISOString() });
   } catch (error) {
-    console.error("Cron job error:", error);
+    cronLogger.error({ err: error }, "Cron job error");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

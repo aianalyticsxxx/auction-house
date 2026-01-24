@@ -19,8 +19,10 @@ export function useAuction(auctionId: string): UseAuctionReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAuction = useCallback(async () => {
-    setIsLoading(true);
+  const fetchAuction = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setIsLoading(true);
+    }
     setError(null);
 
     try {
@@ -38,20 +40,22 @@ export function useAuction(auctionId: string): UseAuctionReturn {
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
   }, [auctionId]);
 
   // Initial fetch
   useEffect(() => {
-    fetchAuction();
+    fetchAuction(true);
   }, [fetchAuction]);
 
-  // Poll for updates on live auctions
+  // Poll for updates on live auctions (silent refresh)
   useEffect(() => {
     if (auction?.status !== "current") return;
 
-    const interval = setInterval(fetchAuction, 5000); // Poll every 5 seconds
+    const interval = setInterval(() => fetchAuction(false), 5000);
     return () => clearInterval(interval);
   }, [auction?.status, fetchAuction]);
 

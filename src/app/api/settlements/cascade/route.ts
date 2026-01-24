@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { rateLimit, getRateLimitIdentifier } from "@/lib/rate-limit/limiter";
+import { handleApiError } from "@/lib/errors/handler";
+import { settlementLogger } from "@/lib/logger";
 
 // POST /api/settlements/cascade - Process expired settlements and cascade to next bidder
-// This endpoint should be called by a cron job every minute
+// This endpoint should be called by a cron job every 5 minutes
 export async function POST(request: NextRequest) {
   try {
+    await rateLimit(getRateLimitIdentifier(request), "strict");
+
     // Optional: Verify cron secret for security
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
@@ -22,7 +27,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase.rpc("process_settlement_cascade");
 
     if (error) {
-      console.error("Cascade processing error:", error);
+      settlementLogger.error({ err: error }, "Cascade processing error");
       return NextResponse.json(
         { error: "Failed to process cascades" },
         { status: 500 }
@@ -38,17 +43,15 @@ export async function POST(request: NextRequest) {
       failed: result.failed_count,
     });
   } catch (error) {
-    console.error("Error processing cascade:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
 // GET /api/settlements/cascade - Check for pending expired settlements (diagnostic)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    await rateLimit(getRateLimitIdentifier(request), "lenient");
+
     const supabase = createServerClient();
 
     const { data: expiredSettlements, error } = await supabase
@@ -63,7 +66,7 @@ export async function GET() {
       .order("payment_deadline", { ascending: true });
 
     if (error) {
-      console.error("Error fetching expired settlements:", error);
+      settlementLogger.error({ err: error }, "Error fetching expired settlements");
       return NextResponse.json(
         { error: "Failed to fetch expired settlements" },
         { status: 500 }
@@ -75,10 +78,6 @@ export async function GET() {
       settlements: expiredSettlements || [],
     });
   } catch (error) {
-    console.error("Error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

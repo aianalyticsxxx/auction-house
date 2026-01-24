@@ -6,6 +6,7 @@ import { handleApiError } from "@/lib/errors/handler";
 import { NotFoundError, ValidationError } from "@/lib/errors/classes";
 import { validateBody } from "@/lib/validation/middleware";
 import { reportSchema } from "@/lib/validation/schemas";
+import { apiLogger } from "@/lib/logger";
 
 // POST /api/reports - Submit a report
 export async function POST(request: NextRequest) {
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (reportError) {
-      console.error("Failed to create report:", reportError);
+      apiLogger.error({ err: reportError, auctionId }, "Failed to create report");
       return NextResponse.json(
         { error: "Failed to submit report" },
         { status: 500 }

@@ -1,3 +1,5 @@
+const { withSentryConfig } = require("@sentry/nextjs");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -23,4 +25,28 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// Only wrap with Sentry if DSN is configured
+const sentryConfig = process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? withSentryConfig(nextConfig, {
+      // Sentry webpack plugin options
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+
+      // Suppress source map upload logs
+      silent: true,
+
+      // Upload source maps to Sentry
+      widenClientFileUpload: true,
+
+      // Hides source maps from generated client bundles
+      hideSourceMaps: true,
+
+      // Automatically tree-shake Sentry logger statements
+      disableLogger: true,
+
+      // Enables automatic instrumentation of Vercel Cron Monitors
+      automaticVercelMonitors: true,
+    })
+  : nextConfig;
+
+module.exports = sentryConfig;

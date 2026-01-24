@@ -1,10 +1,22 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+
+// Dynamic import to avoid hydration mismatch - wallet adapter checks for browser extensions
+const WalletMultiButton = dynamic(
+  () => import("@solana/wallet-adapter-react-ui").then((mod) => mod.WalletMultiButton),
+  { ssr: false, loading: () => <WalletButtonSkeleton /> }
+);
+
+function WalletButtonSkeleton() {
+  return (
+    <div className="h-10 w-32 bg-gray-200 rounded-full animate-pulse" />
+  );
+}
 
 export function WalletButton() {
-  const { connected, publicKey } = useWallet();
+  const { connected } = useWallet();
 
   return (
     <div className="wallet-button-wrapper">

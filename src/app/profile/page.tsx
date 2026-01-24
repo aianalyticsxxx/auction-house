@@ -25,7 +25,24 @@ interface ProfileData {
 
 type Tab = "auctions" | "bids" | "settings";
 
-export default function OwnProfilePage() {
+// Loading skeleton shown during SSR and initial mount
+function ProfileSkeleton() {
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="animate-pulse">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-20 h-20 bg-gray-200 rounded-full" />
+          <div className="space-y-2">
+            <div className="h-8 bg-gray-200 rounded w-48" />
+            <div className="h-4 bg-gray-200 rounded w-32" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
   const { publicKey, connected } = useWallet();
   const { isAuthenticated, signIn, isAuthenticating } = useAuth();
@@ -51,8 +68,8 @@ export default function OwnProfilePage() {
         setProfile(data);
         setEditUsername(data.user.username || "");
       }
-    } catch (err) {
-      console.error("Failed to fetch profile:", err);
+    } catch {
+      // Profile fetch failed silently
     } finally {
       setIsLoading(false);
     }
@@ -112,19 +129,7 @@ export default function OwnProfilePage() {
 
   // Loading
   if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="animate-pulse">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-20 h-20 bg-gray-200 rounded-full" />
-            <div className="space-y-2">
-              <div className="h-8 bg-gray-200 rounded w-48" />
-              <div className="h-4 bg-gray-200 rounded w-32" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   // No profile (need to sign in to create)
@@ -277,4 +282,19 @@ export default function OwnProfilePage() {
       )}
     </div>
   );
+}
+
+export default function OwnProfilePage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Show skeleton during SSR and initial hydration
+  if (!mounted) {
+    return <ProfileSkeleton />;
+  }
+
+  return <ProfileContent />;
 }

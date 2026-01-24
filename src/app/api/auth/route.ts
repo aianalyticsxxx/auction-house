@@ -8,6 +8,8 @@ import { handleApiError } from "@/lib/errors/handler";
 import { AuthenticationError } from "@/lib/errors/classes";
 import { validateBody } from "@/lib/validation/middleware";
 import { authSchema } from "@/lib/validation/schemas";
+import { authLogger } from "@/lib/logger";
+import { createSessionToken } from "@/lib/auth/jwt";
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,17 +56,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Database error:", error);
+      authLogger.error({ err: error, walletAddress }, "Database error during authentication");
       return NextResponse.json(
         { error: "Failed to authenticate" },
         { status: 500 }
       );
     }
 
-    // Create a simple session token (in production, use JWT with proper expiry)
-    const sessionToken = bs58.encode(
-      nacl.randomBytes(32)
-    );
+    // Create JWT session token with proper expiry
+    const sessionToken = await createSessionToken(walletAddress, user.id);
 
     // Return user data and session
     return NextResponse.json({

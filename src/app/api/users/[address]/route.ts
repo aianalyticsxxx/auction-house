@@ -9,6 +9,7 @@ import {
 } from "@/lib/errors/classes";
 import { validateBody } from "@/lib/validation/middleware";
 import { updateUserSchema } from "@/lib/validation/schemas";
+import { apiLogger } from "@/lib/logger";
 
 // GET /api/users/[address] - Get user profile with stats
 export async function GET(
@@ -140,7 +141,7 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error("Update error:", error);
+      apiLogger.error({ err: error, walletAddress: params.address }, "Failed to update profile");
       return NextResponse.json(
         { error: "Failed to update profile" },
         { status: 500 }

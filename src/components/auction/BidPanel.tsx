@@ -13,12 +13,20 @@ import { formatTimeRemaining } from "@/lib/utils/time";
 
 // Countdown for upcoming auctions - shows "Starting soon" instead of "Ended"
 function StartCountdown({ startTime }: { startTime: string }) {
-  const [timeLeft, setTimeLeft] = useState(formatTimeRemaining(startTime));
+  // Initialize with empty string to avoid hydration mismatch
+  const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    // Set initial value on client
+    const getDisplayTime = () => {
       const remaining = formatTimeRemaining(startTime);
-      setTimeLeft(remaining === "Ended" ? "Starting soon" : remaining);
+      return remaining === "Ended" ? "Starting soon" : remaining;
+    };
+
+    setTimeLeft(getDisplayTime());
+
+    const timer = setInterval(() => {
+      setTimeLeft(getDisplayTime());
     }, 1000);
     return () => clearInterval(timer);
   }, [startTime]);
@@ -27,7 +35,7 @@ function StartCountdown({ startTime }: { startTime: string }) {
 
   return (
     <span className={`text-xl font-bold font-mono ${isStartingSoon ? "text-green-600" : ""}`}>
-      {timeLeft}
+      {timeLeft || "--:--"}
     </span>
   );
 }

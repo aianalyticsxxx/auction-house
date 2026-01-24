@@ -73,7 +73,6 @@ export function UploadStep({
         setUploadProgress(100);
         onImageChange(url);
       } catch (error) {
-        console.error("Upload failed:", error);
         setUploadError(error instanceof Error ? error.message : "Failed to upload image");
       } finally {
         setIsUploading(false);

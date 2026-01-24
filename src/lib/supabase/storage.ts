@@ -1,4 +1,7 @@
 import { createServerClient } from "./server";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("storage");
 
 const BUCKET_NAME = "artworks";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -69,7 +72,7 @@ export async function uploadArtwork(
     });
 
   if (error) {
-    console.error("Storage upload error:", error);
+    logger.error({ err: error, userId }, "Storage upload error");
     return { error: "Failed to upload image" };
   }
 

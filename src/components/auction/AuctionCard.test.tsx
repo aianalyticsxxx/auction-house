@@ -34,7 +34,8 @@ describe("AuctionCard", () => {
 
   it("renders bid count", () => {
     render(<AuctionCard auction={mockAuction} />);
-    expect(screen.getByText("2 bids")).toBeInTheDocument();
+    // Component shows just the number, not "X bids"
+    expect(screen.getByText("2")).toBeInTheDocument();
   });
 
   it("links to auction detail page", () => {
@@ -53,6 +54,7 @@ describe("AuctionCard", () => {
 describe("AuctionCardSkeleton", () => {
   it("renders skeleton loader", () => {
     const { container } = render(<AuctionCardSkeleton />);
-    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
+    // Component uses animate-shimmer class for skeleton
+    expect(container.querySelector(".animate-shimmer")).toBeInTheDocument();
   });
 });

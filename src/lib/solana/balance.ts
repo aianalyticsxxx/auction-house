@@ -1,4 +1,7 @@
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("solana");
 
 const RPC_URL =
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com";
@@ -10,7 +13,7 @@ export async function getWalletBalance(walletAddress: string): Promise<number> {
     const balance = await connection.getBalance(publicKey);
     return balance;
   } catch (error) {
-    console.error("Failed to get wallet balance:", error);
+    logger.error({ err: error, walletAddress }, "Failed to get wallet balance");
     return 0;
   }
 }

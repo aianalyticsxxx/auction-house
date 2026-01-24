@@ -10,6 +10,7 @@ import {
 } from "@/lib/errors/classes";
 import { validateBody } from "@/lib/validation/middleware";
 import { placeBidSchema } from "@/lib/validation/schemas";
+import { auctionLogger } from "@/lib/logger";
 
 // POST /api/auctions/[id]/bid - Place a bid
 export async function POST(
@@ -131,7 +132,7 @@ export async function POST(
     });
 
     if (bidError) {
-      console.error("Bid error:", bidError);
+      auctionLogger.error({ err: bidError, auctionId: params.id, userId: user.id }, "Bid error");
       return NextResponse.json(
         { error: bidError.message || "Failed to place bid" },
         { status: 400 }

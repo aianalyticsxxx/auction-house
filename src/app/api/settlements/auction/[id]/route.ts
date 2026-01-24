@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { rateLimit, getRateLimitIdentifier } from "@/lib/rate-limit/limiter";
+import { handleApiError } from "@/lib/errors/handler";
+import { settlementLogger } from "@/lib/logger";
 
 // GET /api/settlements/auction/[id] - Get settlement by auction ID
 export async function GET(
@@ -7,6 +10,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    await rateLimit(getRateLimitIdentifier(request), "lenient");
+
     const supabase = createServerClient();
 
     // First, ensure the auction exists and is in settling state
@@ -67,7 +72,7 @@ export async function GET(
         .single();
 
       if (createError) {
-        console.error("Failed to create settlement:", createError);
+        settlementLogger.error({ err: createError, auctionId: params.id }, "Failed to create settlement");
         return NextResponse.json(
           { error: "Failed to create settlement" },
           { status: 500 }
@@ -118,10 +123,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error fetching settlement:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

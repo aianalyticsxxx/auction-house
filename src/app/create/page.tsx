@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { UploadStep } from "@/components/create/UploadStep";
@@ -8,7 +8,21 @@ import { ConfigStep } from "@/components/create/ConfigStep";
 import { useAuth } from "@/hooks/useAuth";
 import { solToLamports } from "@/types";
 
-export default function CreateAuctionPage() {
+// Loading skeleton shown during SSR and initial mount
+function CreateSkeleton() {
+  return (
+    <div className="max-w-2xl mx-auto px-6 py-16">
+      <div className="animate-pulse">
+        <div className="h-10 bg-gray-200 rounded w-48 mb-4" />
+        <div className="h-5 bg-gray-200 rounded w-72 mb-8" />
+        <div className="h-1 bg-gray-200 rounded mb-8" />
+        <div className="h-64 bg-gray-200 rounded-card" />
+      </div>
+    </div>
+  );
+}
+
+function CreateContent() {
   const router = useRouter();
   const { connected } = useWallet();
   const { user, isAuthenticated, signIn, isAuthenticating } = useAuth();
@@ -59,7 +73,6 @@ export default function CreateAuctionPage() {
       const { auction } = await response.json();
       router.push(`/auction/${auction.id}`);
     } catch (error) {
-      console.error("Failed to create auction:", error);
       alert(error instanceof Error ? error.message : "Failed to create auction");
     } finally {
       setIsSubmitting(false);
@@ -166,4 +179,19 @@ export default function CreateAuctionPage() {
       )}
     </div>
   );
+}
+
+export default function CreateAuctionPage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Show skeleton during SSR and initial hydration
+  if (!mounted) {
+    return <CreateSkeleton />;
+  }
+
+  return <CreateContent />;
 }

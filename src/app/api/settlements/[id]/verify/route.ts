@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { verifyPaymentTransaction } from "@/lib/solana/verify-tx";
+import { rateLimit, getRateLimitIdentifier } from "@/lib/rate-limit/limiter";
+import { handleApiError } from "@/lib/errors/handler";
+import { validateBody } from "@/lib/validation/middleware";
+import { verifySettlementSchema } from "@/lib/validation/schemas";
+import { settlementLogger } from "@/lib/logger";
 
 // POST /api/settlements/[id]/verify - Verify payment transaction
 export async function POST(
@@ -8,15 +13,10 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json();
-    const { txSignature, walletAddress } = body;
+    await rateLimit(getRateLimitIdentifier(request), "moderate");
 
-    if (!txSignature || !walletAddress) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
+    const { txSignature, walletAddress } = validateBody(verifySettlementSchema, body);
 
     const supabase = createServerClient();
 
@@ -92,7 +92,7 @@ export async function POST(
       .eq("id", params.id);
 
     if (updateError) {
-      console.error("Failed to update settlement:", updateError);
+      settlementLogger.error({ err: updateError, settlementId: params.id }, "Failed to update settlement");
       return NextResponse.json(
         { error: "Failed to update settlement" },
         { status: 500 }
@@ -147,11 +147,7 @@ export async function POST(
       message: "Payment verified successfully",
     });
   } catch (error) {
-    console.error("Error verifying payment:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
@@ -161,6 +157,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    await rateLimit(getRateLimitIdentifier(request), "lenient");
+
     const supabase = createServerClient();
 
     const { data: settlement, error } = await supabase
@@ -189,10 +187,6 @@ export async function GET(
 
     return NextResponse.json({ settlement });
   } catch (error) {
-    console.error("Error fetching settlement:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
