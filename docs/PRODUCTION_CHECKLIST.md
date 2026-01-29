@@ -21,8 +21,12 @@ Step-by-step guide to deploy Auction House to production.
 
 ### 1.3 Test Coverage
 - [ ] Run `npm run test:coverage`
+- [ ] Verify coverage is **80% or higher**
 - [ ] Review uncovered critical paths
-- [ ] Add tests for any gaps in auth/bid/settlement
+- [ ] Key files must have high coverage:
+  - `lib/solana/verify-tx.ts` - Payment verification
+  - `lib/validation/schemas.ts` - Input validation
+  - `lib/auth/jwt.ts` - Session tokens
 
 ---
 
@@ -177,8 +181,17 @@ Expected: `{"status":"healthy",...}`
 - [ ] Trigger test error (e.g., invalid API call)
 - [ ] Verify error appears in Sentry
 - [ ] Check source maps are working (readable stack traces)
+- [ ] Verify release version is correct:
+  ```bash
+  # Should match your VERCEL_GIT_COMMIT_SHA
+  ```
 
-### 4.4 Cron Jobs
+### 4.4 Error Boundary Test
+- [ ] Navigate to a non-existent page (e.g., /nonexistent)
+- [ ] Verify custom 404 page displays
+- [ ] Test error boundary by triggering a component error in dev
+
+### 4.5 Cron Jobs
 - [ ] Wait 5 minutes
 - [ ] Check Vercel logs for cron executions
 - [ ] Verify auction statuses update correctly

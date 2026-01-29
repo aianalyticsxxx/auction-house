@@ -66,7 +66,64 @@ describe("Environment Validation", () => {
 
       const { getServerEnv } = await import("./env");
 
-      expect(() => getServerEnv()).toThrow("at least 16 characters");
+      expect(() => getServerEnv()).toThrow("CRON_SECRET");
+    });
+  });
+
+  describe("Client Environment", () => {
+    it("should accept valid client environment variables", async () => {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+
+      const { getClientEnv } = await import("./env");
+
+      expect(() => getClientEnv()).not.toThrow();
+      const env = getClientEnv();
+      expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe("https://test.supabase.co");
+      expect(env.NEXT_PUBLIC_SUPABASE_ANON_KEY).toBe("test-anon-key");
+    });
+
+    it("should return cached client env on second call", async () => {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+
+      const { getClientEnv } = await import("./env");
+
+      const env1 = getClientEnv();
+      const env2 = getClientEnv();
+
+      expect(env1).toBe(env2); // Same reference (cached)
+    });
+
+    it("should reject missing required client variables", async () => {
+      delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+      delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      const { getClientEnv } = await import("./env");
+
+      expect(() => getClientEnv()).toThrow("Client environment validation failed");
+    });
+
+    it("should reject invalid client Supabase URL", async () => {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "not-a-url";
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+
+      const { getClientEnv } = await import("./env");
+
+      expect(() => getClientEnv()).toThrow("Client environment validation failed");
+    });
+
+    it("should accept optional client variables", async () => {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+      process.env.NEXT_PUBLIC_SOLANA_RPC_URL = "https://api.devnet.solana.com";
+      process.env.NEXT_PUBLIC_SOLANA_NETWORK = "devnet";
+
+      const { getClientEnv } = await import("./env");
+
+      const env = getClientEnv();
+      expect(env.NEXT_PUBLIC_SOLANA_RPC_URL).toBe("https://api.devnet.solana.com");
+      expect(env.NEXT_PUBLIC_SOLANA_NETWORK).toBe("devnet");
     });
   });
 

@@ -3,6 +3,9 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
+  // Release tracking - uses SENTRY_RELEASE from Vercel or git SHA
+  release: process.env.SENTRY_RELEASE || process.env.VERCEL_GIT_COMMIT_SHA || "development",
+
   // Performance Monitoring
   tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 

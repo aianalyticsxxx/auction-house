@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const isProductionEnv = process.env.NODE_ENV === "production";
+
 // Server-side required environment variables
 const serverEnvSchema = z.object({
   // Supabase
@@ -15,19 +17,24 @@ const serverEnvSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
-  // Cron Jobs
-  CRON_SECRET: z.string().min(16, "CRON_SECRET must be at least 16 characters").optional(),
+  // Cron Jobs - REQUIRED in production
+  CRON_SECRET: isProductionEnv
+    ? z.string().min(16, "CRON_SECRET must be at least 16 characters for production")
+    : z.string().min(16).optional(),
 
-  // JWT
-  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters").optional(),
+  // JWT - REQUIRED in production
+  JWT_SECRET: isProductionEnv
+    ? z.string().min(32, "JWT_SECRET must be at least 32 characters for production")
+    : z.string().min(32).optional(),
 
   // CORS
   ALLOWED_ORIGIN: z.string().optional(),
 
-  // Sentry (optional)
+  // Sentry (optional but recommended for production)
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   SENTRY_ORG: z.string().optional(),
   SENTRY_PROJECT: z.string().optional(),
+  SENTRY_AUTH_TOKEN: z.string().optional(),
 });
 
 // Client-side environment variables (prefixed with NEXT_PUBLIC_)
