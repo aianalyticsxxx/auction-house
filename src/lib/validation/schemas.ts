@@ -4,6 +4,7 @@ import { z } from "zod";
 const walletAddressSchema = z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
 const uuidSchema = z.string().uuid();
 const lamportsSchema = z.number().int().positive();
+const lamportsOrZeroSchema = z.number().int().nonnegative();
 const titleSchema = z
   .string()
   .min(3)
@@ -23,7 +24,7 @@ export const createAuctionSchema = z
       .transform((str) => str.trim()),
     imageUrl: z.string().url(),
     tags: tagsSchema.optional().default([]),
-    reservePrice: lamportsSchema,
+    reservePrice: lamportsOrZeroSchema,
     minBidIncrement: lamportsSchema,
     startTime: z.string().datetime(),
     endTime: z.string().datetime(),
