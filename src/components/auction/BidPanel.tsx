@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import type { Auction, Bid } from "@/types";
 import { formatSol, formatNumber } from "@/lib/utils/format";
@@ -12,11 +12,14 @@ import { AuctionStatusBadge } from "./AuctionStatus";
 import { formatTimeRemaining } from "@/lib/utils/time";
 
 // Countdown for upcoming auctions - shows "Starting soon" instead of "Ended"
-function StartCountdown({ startTime }: { startTime: string }) {
+function StartCountdown({ startTime, onStart }: { startTime: string; onStart?: () => void }) {
   // Initialize with empty string to avoid hydration mismatch
   const [timeLeft, setTimeLeft] = useState("");
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
+    hasStartedRef.current = false; // Reset when startTime changes
+
     // Set initial value on client
     const getDisplayTime = () => {
       const remaining = formatTimeRemaining(startTime);
@@ -26,10 +29,18 @@ function StartCountdown({ startTime }: { startTime: string }) {
     setTimeLeft(getDisplayTime());
 
     const timer = setInterval(() => {
-      setTimeLeft(getDisplayTime());
+      const display = getDisplayTime();
+      setTimeLeft(display);
+
+      // Trigger onStart when countdown ends
+      if (display === "Starting soon" && !hasStartedRef.current) {
+        hasStartedRef.current = true;
+        // Small delay to allow server to update status
+        setTimeout(() => onStart?.(), 2000);
+      }
     }, 1000);
     return () => clearInterval(timer);
-  }, [startTime]);
+  }, [startTime, onStart]);
 
   const isStartingSoon = timeLeft === "Starting soon";
 
@@ -44,9 +55,10 @@ interface BidPanelProps {
   auction: Auction;
   highestBid: number | null;
   onBidPlaced: () => void;
+  onAuctionStart?: () => void;
 }
 
-export function BidPanel({ auction, highestBid, onBidPlaced }: BidPanelProps) {
+export function BidPanel({ auction, highestBid, onBidPlaced, onAuctionStart }: BidPanelProps) {
   const { connected, publicKey } = useWallet();
   const { user, isAuthenticated, signIn, isAuthenticating } = useAuth();
   const { balance, balanceSol } = useBalance();
@@ -138,7 +150,7 @@ export function BidPanel({ auction, highestBid, onBidPlaced }: BidPanelProps) {
         {auction.status === "upcoming" && (
           <div className="text-right">
             <p className="text-xs text-gray-500 mb-1">Starts in</p>
-            <StartCountdown startTime={auction.start_time} />
+            <StartCountdown startTime={auction.start_time} onStart={onAuctionStart} />
           </div>
         )}
       </div>

@@ -78,6 +78,7 @@ export default function AuctionPage({ params }: PageProps) {
         currentUserWallet={publicKey?.toBase58()}
         isAuthenticated={isAuthenticated}
         onBidPlaced={refetch}
+        onAuctionStart={refetch}
       />
     </div>
   );

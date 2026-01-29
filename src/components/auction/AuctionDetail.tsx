@@ -14,6 +14,7 @@ interface AuctionDetailProps {
   currentUserWallet?: string;
   isAuthenticated?: boolean;
   onBidPlaced: () => void;
+  onAuctionStart?: () => void;
 }
 
 export function AuctionDetail({
@@ -21,6 +22,7 @@ export function AuctionDetail({
   currentUserWallet,
   isAuthenticated = false,
   onBidPlaced,
+  onAuctionStart,
 }: AuctionDetailProps) {
   const bids = auction.bids || [];
   const highestBid = bids.length > 0 ? Math.max(...bids.map((b) => b.amount)) : null;
@@ -99,6 +101,7 @@ export function AuctionDetail({
           auction={auction}
           highestBid={highestBid}
           onBidPlaced={onBidPlaced}
+          onAuctionStart={onAuctionStart}
         />
 
         {/* Auction Info */}
