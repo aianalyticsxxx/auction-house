@@ -19,7 +19,7 @@ export const createAuctionSchema = z
     title: titleSchema,
     description: z
       .string()
-      .min(10)
+      .min(3)
       .max(5000)
       .transform((str) => str.trim()),
     imageUrl: z.string().url(),
