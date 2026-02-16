@@ -66,8 +66,11 @@ function CreateContent() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create auction");
+        const errorData = await response.json();
+        const details = Array.isArray(errorData.details)
+          ? errorData.details.map((d: { field: string; message: string }) => `${d.field}: ${d.message}`).join("\n")
+          : "";
+        throw new Error(details || errorData.error || "Failed to create auction");
       }
 
       const { auction } = await response.json();
